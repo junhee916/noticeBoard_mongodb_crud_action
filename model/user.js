@@ -1,5 +1,7 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
+const normalize = require('normalize-url')
+const gravatar = require('gravatar')
 
 const userSchema = mongoose.Schema(
     {
@@ -15,6 +17,9 @@ const userSchema = mongoose.Schema(
         password : {
             type : String,
             required : true
+        },
+        profileImage : {
+            type : String
         }
     },
     {
@@ -25,6 +30,18 @@ const userSchema = mongoose.Schema(
 userSchema.pre('save', async function(next){
 
     try{
+
+        const avatar = normalize(
+            gravatar.url(this.email, {
+                s : '200',
+                r : 'pg',
+                d : 'mm'
+            }),
+            {forceHttps : true}
+        )
+
+        this.profileImage  = avatar
+
         const salt = await bcrypt.genSalt(10)
 
         const passwordHash = await bcrypt.hash(this.password, salt)
